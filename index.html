@@ -22,15 +22,18 @@ p{margin:4px 0;font-size:0.9rem;}
 canvas{width:80vw;max-width:300px;aspect-ratio:1/1;background:#fff;
   border:1px solid var(--border);border-radius:8px;}
 
-/* 🔹 選択肢 */
+/* 🔹 選択肢（3×2構成） */
 .choice-container{
-  display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0;
+  display:flex;flex-wrap:wrap;justify-content:center;
+  margin:6px auto;max-width:320px;
 }
 .choice-container label{
-  display:flex;align-items:center;gap:4px;padding:4px 6px;
-  border-radius:6px;background:#fff;border:1px solid #ddd;
-  cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  gap:4px;padding:6px;border-radius:6px;background:#fff;border:1px solid #ddd;
+  cursor:pointer;font-size:14px;width:31%;margin:2px;
+  box-sizing:border-box;
 }
+.choice-container label:hover{background:#f5f5f5;}
 input[type="radio"]{transform:scale(1.1);}
 
 /* 🔹 結果表示 */
