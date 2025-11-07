@@ -1,74 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📊 相関係数 当てゲーム</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📊 相関係数 当てゲーム（間隔0.15保証）</title>
 <style>
-body {
-  font-family: 'Hiragino Kaku Gothic ProN', 'Segoe UI', sans-serif;
-  text-align: center;
-  margin: 10px;
-  background: #fafafa;
+:root{
+  --bg:#fafafa; --border:#ccc; --btn:#f0f0f0; --btn-hover:#e0e0e0;
+  --ok-color:#007bff; --ng-color:#ff3333;
 }
-canvas {
-  border: 1px solid #ccc;
-  width: 90vw;
-  max-width: 360px;
-  height: auto;
-  background: white;
-  margin: 10px auto;
-  display: block;
-}
-button {
-  margin: 8px;
-  padding: 10px 15px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: #f0f0f0;
-}
-button:hover { background: #e0e0e0; }
-#result {
-  font-weight: bold;
-  margin-top: 10px;
-  font-size: 18px;
-  transition: color 0.3s ease;
-}
-#score {
-  font-size: 16px;
-  margin: 5px 0;
-}
-#hearts {
-  font-size: 24px;
-  margin-top: 5px;
-}
-.choice-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 10px 0;
-}
-.choice-container label {
-  margin: 5px 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-input[type="radio"] { margin-right: 5px; }
+html,body{height:100%; margin:0; background:var(--bg); font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;}
+.container{max-width:860px; margin:0 auto; padding:12px; text-align:center;}
+h2{margin:8px 0; font-size:clamp(1.1rem,2.2vw,1.6rem);}
+p{margin:6px 0;}
+#score{margin:6px 0; font-size:0.98rem;}
+.canvas-wrap{display:flex; justify-content:center; margin:8px 0;}
+canvas{width:92vw; max-width:420px; aspect-ratio:1/1; background:#fff; border:1px solid var(--border); border-radius:10px; display:block;}
+.choice-container{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:10px 0;}
+.choice-container label{display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:#fff; border:1px solid #e6e6e6; cursor:pointer; user-select:none;}
+input[type="radio"]{transform:scale(1.15);}
+.btn{padding:10px 14px; margin:6px; border-radius:8px; background:var(--btn); border:1px solid var(--border); font-size:1rem; cursor:pointer;}
+#result{font-weight:700; margin-top:10px; min-height:2em; transition:color .25s;}
+#hearts{font-size:22px; margin-top:6px;}
+footer{position:fixed; left:0; right:0; bottom:10px; display:flex; justify-content:center; pointer-events:none;}
+footer .btn{pointer-events:auto;}
+@media(min-width:680px){ .container{padding:20px;} canvas{max-width:380px;} }
 </style>
 </head>
 <body>
-<h2>📊 相関係数 当てゲーム</h2>
-<p>散布図を見て、正確な相関係数を選ぼう！</p>
-<div id="score">レベル: 1　合計正解: 0</div>
-<div id="hearts">💖💖💖</div>
-<canvas id="scatter" width="360" height="360"></canvas>
-<div class="choice-container" id="choices"></div>
-<button id="checkBtn" onclick="checkAnswer()">答え合わせ</button>
-<p id="result"></p>
-<button onclick="nextQuestion()">次の問題へ</button>
+<div class="container">
+  <h2>📊 相関係数 当てゲーム</h2>
+  <p>散布図を見て、6つから相関係数を当てよう</p>
+  <div id="score">レベル: 1　合計正解: 0</div>
+  <div id="hearts">💖💖💖</div>
+
+  <div class="canvas-wrap">
+    <canvas id="scatter" width="360" height="360" aria-label="散布図"></canvas>
+  </div>
+
+  <div class="choice-container" id="choices" role="radiogroup" aria-label="選択肢"></div>
+
+  <div>
+    <button class="btn" id="checkBtn">答え合わせ</button>
+  </div>
+
+  <p id="result" role="status" aria-live="polite"></p>
+</div>
+
+<footer>
+  <button class="btn" id="nextBtn">次の問題へ</button>
+</footer>
 
 <script>
+/* ---------- 状態 ---------- */
 let trueR = 0;
 let points = [];
 let totalCorrect = 0;
@@ -77,18 +61,21 @@ let answered = false;
 let level = 1;
 const maxMistakes = 3;
 
-function randn() {
+/* ---------- util ---------- */
+function randn(){
   let u=0,v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
 }
+function clamp(v,min,max){ return Math.min(Math.max(v,min),max); }
+function to2(v){ return Number(Number(v).toFixed(2)); }
 
+/* ---------- レベル系 ---------- */
 function getStdDevByLevel(lv){
   if(lv===1) return 0.6;
   if(lv===2) return 0.8;
   if(lv===3) return 1.5;
   return 2.0;
 }
-
 function getColorByLevel(lv){
   if(lv===1) return "steelblue";
   if(lv===2) return "orange";
@@ -96,80 +83,199 @@ function getColorByLevel(lv){
   return "crimson";
 }
 
-function generateData(r,n=80,lv=1){
-  const data=[];
-  const sd=getStdDevByLevel(lv);
+/* ---------- データ生成 ---------- */
+function generateData(r, n=100, lv=1){
+  const data = [];
+  const sd = getStdDevByLevel(lv);
+  const safeR = clamp(r, -0.9999, 0.9999);
   for(let i=0;i<n;i++){
-    const x=randn()*sd;
-    const y=r*x + Math.sqrt(1-r*r)*randn()*sd;
+    const x = randn() * sd;
+    const y = safeR * x + Math.sqrt(1 - safeR*safeR) * randn() * sd;
     data.push([x,y]);
   }
   return data;
 }
 
+/* ---------- 描画（Retina対応） ---------- */
 function drawScatter(data){
-  const ctx=document.getElementById("scatter").getContext("2d");
-  ctx.clearRect(0,0,360,360);
-  ctx.fillStyle=getColorByLevel(level);
+  const canvas = document.getElementById('scatter');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssSize = Math.min(window.innerWidth * 0.92, 420);
+  canvas.style.width = cssSize + 'px';
+  canvas.style.height = cssSize + 'px';
+  canvas.width = Math.round(cssSize * dpr);
+  canvas.height = Math.round(cssSize * dpr);
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,cssSize,cssSize);
+
+  ctx.fillStyle = getColorByLevel(level);
+  const center = cssSize / 2;
+  const scaleFactor = cssSize / 5;
+
   data.forEach(([x,y])=>{
-    const px=180+x*70;
-    const py=180-y*70;
+    const px = center + x * scaleFactor;
+    const py = center - y * scaleFactor;
     ctx.beginPath();
-    ctx.arc(px,py,3,0,2*Math.PI);
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
     ctx.fill();
   });
 }
 
-function generateDistinctValues(center,count,min,max){
-  const values=[];
-  let attempts=0;
-  while(values.length<count && attempts<500){
-    const val=min+(max-min)*Math.random();
-    const rounded=Math.round(val*100)/100;
-    if(values.every(x=>Math.abs(x-rounded)>=0.15)){
-      values.push(rounded);
+/* ---------- 選択肢生成（正3・負3・全体で差>=minDiffを厳守） ---------- */
+function createChoicesStrict(trueR){
+  const minDiff = 0.15;
+  const maxAttempts = 1000;
+
+  // ranges: positive in [0.15, 1], negative in [-1, -0.15]
+  const posMin = 0.15, posMax = 1.0;
+  const negMin = -1.0, negMax = -0.15;
+
+  function genGroup(count, minV, maxV, forbidList=[]){
+    const arr = [];
+    let tries = 0;
+    while(arr.length < count && tries < 2000){
+      tries++;
+      const v = to2(minV + Math.random() * (maxV - minV));
+      // check spacing to existing arr and forbidList
+      const ok = arr.every(a => Math.abs(a - v) >= minDiff) &&
+                 forbidList.every(f => Math.abs(f - v) >= minDiff);
+      if(ok) arr.push(v);
     }
-    attempts++;
+    return arr;
   }
-  return values;
+
+  // attempts loop: try to produce pos and neg satisfying all pairwise distances and trueR constraints
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    let pos = [];
+    let neg = [];
+
+    // If trueR is positive, we'll ensure other pos values are >=minDiff away from trueR by passing forbidList
+    if(trueR >= 0){
+      // generate pos others avoiding trueR
+      pos = genGroup(3, posMin, posMax, [to2(trueR)]);
+      // if couldn't generate, continue
+      if(pos.length < 3) continue;
+      // now replace one of pos with trueR to guarantee inclusion
+      const idx = Math.floor(Math.random() * 3);
+      pos[idx] = to2(trueR);
+      // ensure pos elements still pairwise separated (they may be if genGroup avoided trueR)
+      // If any duplicates/too-close, skip
+      if(!pos.every((v,i)=>pos.every((w,j)=> i===j || Math.abs(v-w)>=minDiff))) continue;
+
+      // generate neg ensuring they are separated from all pos by minDiff (forbidList = pos)
+      neg = genGroup(3, negMin, negMax, pos);
+      if(neg.length < 3) continue;
+    } else {
+      // trueR negative: symmetric logic
+      neg = genGroup(3, negMin, negMax, [to2(trueR)]);
+      if(neg.length < 3) continue;
+      const idx = Math.floor(Math.random() * 3);
+      neg[idx] = to2(trueR);
+      if(!neg.every((v,i)=>neg.every((w,j)=> i===j || Math.abs(v-w)>=minDiff))) continue;
+      pos = genGroup(3, posMin, posMax, neg);
+      if(pos.length < 3) continue;
+    }
+
+    // Combine and final full-pairwise check
+    const all = [...neg, ...pos];
+    let ok = true;
+    for(let i=0;i<all.length;i++){
+      for(let j=i+1;j<all.length;j++){
+        if(Math.abs(all[i] - all[j]) < minDiff - 1e-9) { ok = false; break; }
+      }
+      if(!ok) break;
+    }
+    if(ok){
+      // sort ascending (neg then pos naturally, but sort to be safe)
+      return all.map(x => to2(x)).sort((a,b)=>a-b);
+    }
+    // else next attempt
+  }
+
+  // ---- fallback: deterministic safe construction ----
+  // We'll construct values that are guaranteed to be separated:
+  // negatives: start at -0.9, step 0.18 -> [-0.9, -0.72, -0.54] (all <= -0.15)
+  // positives: start at 0.54, step 0.18 -> [0.54,0.72,0.9] (all >= 0.15)
+  // Then include trueR by replacing one on its side, but only if it's minDiff away from every other; otherwise shift others outward.
+  let negFallback = [-0.9, -0.72, -0.54];
+  let posFallback = [0.54, 0.72, 0.9];
+
+  if(trueR >= 0){
+    // try place trueR into posFallback at index 0 and adjust neighbors to keep spacing
+    posFallback[0] = to2(trueR);
+    // ensure posFallback are separated; if not, rebuild around trueR
+    posFallback = rebuildSideAroundTrueR(trueR, 3, posMin, posMax, minDiff);
+  } else {
+    negFallback[0] = to2(trueR);
+    negFallback = rebuildSideAroundTrueR(trueR, 3, negMin, negMax, minDiff);
+  }
+
+  const final = [...negFallback, ...posFallback].map(x=>to2(x)).sort((a,b)=>a-b);
+  return final;
+
+  // helper used in fallback to build a side around trueR with spacing
+  function rebuildSideAroundTrueR(center, count, minV, maxV, spacing){
+    const out = [to2(center)];
+    // build higher values
+    let up = center;
+    while(out.length < count){
+      up = to2(up + spacing + 0.02); // small slack
+      if(up > maxV) break;
+      out.push(up);
+    }
+    // if still not enough, build lower values
+    let down = center;
+    while(out.length < count){
+      down = to2(down - spacing - 0.02);
+      if(down < minV) break;
+      out.push(down);
+    }
+    // if still not enough, fill with evenly spaced safe points
+    if(out.length < count){
+      const res = [];
+      const step = (maxV - minV) / (count + 1);
+      for(let i=1;i<=count;i++){
+        res.push(to2(minV + step * i));
+      }
+      return res.slice(0,count).sort((a,b)=>a-b);
+    }
+    return out.slice(0,count).sort((a,b)=>a-b);
+  }
 }
 
-function newQuestion(){
-  document.getElementById("result").textContent="";
-  document.getElementById("result").style.color="#000";
-  answered=false;
+/* ---------- スコア/表示系 ---------- */
+function updateScoreDisplay(){
+  document.getElementById('score').textContent = `レベル: ${level}　合計正解: ${totalCorrect}`;
+  const hearts = '💖'.repeat(Math.max(0, maxMistakes - wrongCount)) + '💔'.repeat(Math.max(0, wrongCount));
+  document.getElementById('hearts').textContent = hearts;
+}
 
-  level = Math.floor(totalCorrect/5)+1;
-  trueR = Math.round((Math.random()*2-1)*100)/100;
-  points = generateData(trueR,100,level);
+function setRadioDisabled(disabled){
+  document.querySelectorAll('input[name="rchoice"]').forEach(i => i.disabled = disabled);
+}
+
+/* ---------- ゲーム進行 ---------- */
+function newQuestion(){
+  answered = false;
+  document.getElementById('result').textContent = '';
+  document.getElementById('result').style.color = '#000';
+
+  level = Math.floor(totalCorrect / 5) + 1;
+  trueR = to2((Math.random() * 2 - 1)); // -1..1 rounded
+  points = generateData(trueR, 100, level);
   drawScatter(points);
 
-  // 3 positive + 3 negative choices
-  const positive = generateDistinctValues(0.5,3,0,1);
-  const negative = generateDistinctValues(-0.5,3,-1,0);
-  let choices = [...positive, ...negative];
+  const choices = createChoicesStrict(trueR); // strict generator
+  const container = document.getElementById('choices');
+  container.innerHTML = '';
 
-  // Insert true answer randomly
-  if(!choices.includes(trueR)) {
-    const idx = Math.floor(Math.random()*choices.length);
-    choices[idx] = trueR;
-  }
-
-  // Ensure spacing ≥ 0.15
-  choices = [...new Set(choices)].sort((a,b)=>a-b);
-  for(let i=0;i<choices.length;i++){
-    for(let j=i+1;j<choices.length;j++){
-      if(Math.abs(choices[i]-choices[j])<0.15){
-        choices[j]=choices[j]>0?choices[j]+0.15:choices[j]-0.15;
-      }
-    }
-  }
-
-  const container=document.getElementById("choices");
-  container.innerHTML="";
-  choices.forEach((c,i)=>{
-    const label=document.createElement("label");
-    label.innerHTML=`<input type="radio" name="rchoice" value="${c}" ${i===0?"checked":""}>${c.toFixed(2)}`;
+  choices.forEach((c, i) => {
+    const label = document.createElement('label');
+    // leave radios initially unchecked
+    label.innerHTML = `<input type="radio" name="rchoice" value="${c}"> ${c.toFixed(2)}`;
     container.appendChild(label);
   });
 
@@ -177,32 +283,29 @@ function newQuestion(){
   updateScoreDisplay();
 }
 
-function setRadioDisabled(disabled){
-  document.querySelectorAll('input[name="rchoice"]').forEach(input=>{
-    input.disabled=disabled;
-  });
-}
-
 function checkAnswer(){
   if(answered) return;
-  answered=true;
-  const selected=parseFloat(document.querySelector('input[name="rchoice"]:checked').value);
+  const selectedInput = document.querySelector('input[name="rchoice"]:checked');
+  if(!selectedInput){
+    alert('選択肢を選んでください！');
+    return;
+  }
+  answered = true;
+  const val = parseFloat(selectedInput.value);
+  const resultEl = document.getElementById('result');
 
-  const resultEl=document.getElementById("result");
-
-  if(selected===trueR){
+  if(Math.abs(val - trueR) < 0.001){
     totalCorrect++;
-    resultEl.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
-    resultEl.style.color="#007bff";
+    resultEl.textContent = `🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
+    resultEl.style.color = getComputedStyle(document.documentElement).getPropertyValue('--ok-color') || '#007bff';
   } else {
     wrongCount++;
-    resultEl.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
-    resultEl.style.color="#ff3333";
-  }
-
-  if(wrongCount>=maxMistakes){
-    resultEl.innerHTML=`💀 ゲームオーバー！<br>最終スコア: ${totalCorrect}`;
-    resultEl.style.color="#ff3333";
+    resultEl.textContent = `❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
+    resultEl.style.color = getComputedStyle(document.documentElement).getPropertyValue('--ng-color') || '#ff3333';
+    if(wrongCount >= maxMistakes){
+      resultEl.innerHTML = `💀 ゲームオーバー!<br>最終スコア: ${totalCorrect}`;
+      resultEl.style.color = getComputedStyle(document.documentElement).getPropertyValue('--ng-color') || '#ff3333';
+    }
   }
 
   setRadioDisabled(true);
@@ -210,19 +313,19 @@ function checkAnswer(){
 }
 
 function nextQuestion(){
-  if(wrongCount>=maxMistakes){
-    totalCorrect=0;
-    wrongCount=0;
+  if(wrongCount >= maxMistakes){
+    totalCorrect = 0;
+    wrongCount = 0;
   }
   newQuestion();
 }
 
-function updateScoreDisplay(){
-  document.getElementById("score").textContent=`レベル: ${level}　合計正解: ${totalCorrect}`;
-  const hearts = "💖".repeat(maxMistakes - wrongCount) + "💔".repeat(wrongCount);
-  document.getElementById("hearts").textContent = hearts;
-}
+/* ---------- イベント割当 ---------- */
+document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+window.addEventListener('resize', ()=> drawScatter(points));
 
+/* ---------- 初回開始 ---------- */
 newQuestion();
 </script>
 </body>
