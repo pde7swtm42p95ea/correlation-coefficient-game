@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📊 相関係数当てゲーム</title>
+<style>
+:root{
+  --bg:#fafafa; --border:#ccc; --btn:#f0f0f0; --btn-hover:#e0e0e0;
+}
+body{margin:0; background:var(--bg); font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif; text-align:center;}
+h2{margin:12px 0; font-size:clamp(1.1rem,2vw,1.5rem);}
+p{margin:6px 0; font-size:clamp(0.9rem,1.8vw,1rem);}
+#score{font-size:clamp(0.9rem,1.6vw,1rem); margin-bottom:8px;}
+canvas{
+  width:95vw; max-width:420px; aspect-ratio:1/1;
+  border:1px solid var(--border); border-radius:8px;
+  background:#fff; display:block; margin:10px auto;
+}
+.choice-container{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:10px 0;
+}
+.choice-container label{
+  display:flex; align-items:center; gap:6px;
+  background:#fff; border:1px solid var(--border); border-radius:8px;
+  padding:6px 10px; font-size:clamp(0.95rem,1.8vw,1rem); cursor:pointer;
+}
+input[type="radio"]{transform:scale(1.15);}
+.btn{
+  padding:10px 16px; margin:8px; border-radius:8px;
+  border:1px solid var(--border); background:var(--btn);
+  font-size:clamp(1rem,2vw,1.05rem); cursor:pointer;
+}
+.btn:hover{background:var(--btn-hover);}
+#result{font-weight:700; margin-top:10px; font-size:clamp(1rem,2vw,1.1rem);}
+</style>
+</head>
+<body>
+<h2>📊 相関係数当てゲーム</h2>
+<p>散布図を見て、対応する相関係数を選んでね！</p>
+<div id="score">レベル: 1  合計正解: 0  間違い: 0/3</div>
+<canvas id="scatter" width="360" height="360"></canvas>
+<div class="choice-container" id="choices"></div>
+<button class="btn" id="checkBtn">答え合わせ</button>
+<p id="result"></p>
+<button class="btn" id="nextBtn">次の問題へ</button>
+
+<script>
+let trueR=0, points=[], totalCorrect=0, wrongCount=0, answered=false, level=1;
+
+function randn(){
+  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
+function to2(v){return Number(v.toFixed(2));}
+
+function getStdDevByLevel(lv){return lv===1?0.6:lv===2?0.8:lv===3?1.5:2.0;}
+function getColorByLevel(lv){return lv===1?"steelblue":lv===2?"orange":lv===3?"green":"crimson";}
+
+function generateData(r,n=80,lv=1){
+  const data=[],sd=getStdDevByLevel(lv),safeR=clamp(r,-0.9999,0.9999);
+  for(let i=0;i<n;i++){
+    const x=randn()*sd;
+    const y=safeR*x+Math.sqrt(1-safeR*safeR)*randn()*sd;
+    data.push([x,y]);
+  }
+  return data;
+}
+
+function drawScatter(data){
+  const canvas=document.getElementById("scatter");
+  const ctx=canvas.getContext("2d");
+  const dpr=window.devicePixelRatio||1;
+  const cssSize=Math.min(window.innerWidth*0.9,420);
+  canvas.style.width=cssSize+"px";
+  canvas.style.height=cssSize+"px";
+  canvas.width=cssSize*dpr;
+  canvas.height=cssSize*dpr;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cssSize,cssSize);
+  ctx.fillStyle=getColorByLevel(level);
+  const center=cssSize/2, scaleFactor=cssSize/5;
+  data.forEach(([x,y])=>{
+    const px=center+x*scaleFactor, py=center-y*scaleFactor;
+    ctx.beginPath(); ctx.arc(px,py,3,0,2*Math.PI); ctx.fill();
+  });
+}
+
+/* 🎯 6択生成：正3・負3・全体で0.15以上差を保証 */
+function createChoices(trueR){
+  const minDiff=0.15;
+  let choices=[], attempts=0;
+  while(attempts<500){
+    const pos=[],neg=[];
+    while(pos.length<3){
+      const r=to2(0.05+Math.random()*0.95);
+      if(pos.every(x=>Math.abs(x-r)>=minDiff)) pos.push(r);
+    }
+    while(neg.length<3){
+      const r=to2(-0.05-Math.random()*0.95);
+      if(neg.every(x=>Math.abs(x-r)>=minDiff)) neg.push(r);
+    }
+    choices=[...neg,...pos];
+
+    // trueRを置換（同側のランダム位置）
+    if(trueR>=0){
+      const idx=3+Math.floor(Math.random()*3);
+      choices[idx]=to2(trueR);
+    }else{
+      const idx=Math.floor(Math.random()*3);
+      choices[idx]=to2(trueR);
+    }
+
+    // 全体の間隔チェック
+    let ok=true;
+    for(let i=0;i<choices.length;i++){
+      for(let j=i+1;j<choices.length;j++){
+        if(Math.abs(choices[i]-choices[j])<minDiff){
+          ok=false; break;
+        }
+      }
+      if(!ok) break;
+    }
+    if(ok) return choices.sort((a,b)=>a-b);
+    attempts++;
+  }
+  // fallback（500回超えたら安全にランダムで返す）
+  return [-0.9,-0.6,-0.3,0.3,0.6,0.9];
+}
+
+function updateScoreDisplay(){
+  document.getElementById("score").textContent=
+    `レベル: ${level}  合計正解: ${totalCorrect}  間違い: ${wrongCount}/3`;
+}
+
+function setRadioDisabled(disabled){
+  document.querySelectorAll('input[name="rchoice"]').forEach(i=>i.disabled=disabled);
+}
+
+function newQuestion(){
+  answered=false;
+  document.getElementById("result").textContent="";
+  level=Math.floor(totalCorrect/5)+1;
+  trueR=to2((Math.random()*2-1));
+  points=generateData(trueR,100,level);
+  drawScatter(points);
+  const choices=createChoices(trueR);
+  const container=document.getElementById("choices");
+  container.innerHTML="";
+  choices.forEach((c)=>{
+    const label=document.createElement("label");
+    label.innerHTML=`<input type="radio" name="rchoice" value="${c}"> ${c.toFixed(2)}`;
+    container.appendChild(label);
+  });
+  setRadioDisabled(false);
+  updateScoreDisplay();
+}
+
+function checkAnswer(){
+  if(answered)return;
+  const selected=document.querySelector('input[name="rchoice"]:checked');
+  if(!selected){alert("選択肢を選んでください！");return;}
+  answered=true;
+  const val=parseFloat(selected.value);
+  if(Math.abs(val-trueR)<0.001){
+    totalCorrect++;
+    document.getElementById("result").textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
+  }else{
+    wrongCount++;
+    if(wrongCount>=3){
+      document.getElementById("result").innerHTML=`💀 ゲームオーバー!<br>
+      正解は <strong>${trueR.toFixed(2)}</strong><br>
+      <span style="color:red;font-size:1.5rem;">最終スコア: ${totalCorrect}</span>`;
+    }else{
+      document.getElementById("result").textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
+    }
+  }
+  setRadioDisabled(true);
+  updateScoreDisplay();
+}
+
+function nextQuestion(){
+  if(wrongCount>=3){totalCorrect=0;wrongCount=0;}
+  newQuestion();
+}
+
+document.getElementById("checkBtn").addEventListener("click",checkAnswer);
+document.getElementById("nextBtn").addEventListener("click",nextQuestion);
+window.addEventListener("resize",()=>drawScatter(points));
+newQuestion();
+</script>
+</body>
+</html>
