@@ -16,13 +16,9 @@ h2{margin:4px 0;font-size:clamp(1rem,2.5vw,1.3rem);}
 p{margin:4px 0;font-size:0.9rem;}
 #score{margin:4px 0;font-size:0.9rem;}
 #hearts{font-size:18px;margin:4px 0;}
-
-/* 🔹 散布図を小型化 */
 .canvas-wrap{display:flex;justify-content:center;margin:4px 0;}
 canvas{width:80vw;max-width:300px;aspect-ratio:1/1;background:#fff;
   border:1px solid var(--border);border-radius:8px;}
-
-/* 🔹 選択肢（3×2構成） */
 .choice-container{
   display:flex;flex-wrap:wrap;justify-content:center;
   margin:6px auto;max-width:320px;
@@ -35,40 +31,22 @@ canvas{width:80vw;max-width:300px;aspect-ratio:1/1;background:#fff;
 }
 .choice-container label:hover{background:#f5f5f5;}
 input[type="radio"]{transform:scale(1.1);}
-
-/* 🔹 結果表示 */
 #result{font-weight:700;margin-top:6px;min-height:2.2em;transition:color .25s;font-size:0.95rem;}
-
-/* 🔹 ボタン */
 footer{position:sticky;bottom:0;background:var(--bg);
   padding:6px 0;border-top:1px solid var(--border);display:flex;justify-content:center;}
 .btn-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:100%;max-width:420px;}
 .btn{
   padding:8px 10px;border-radius:6px;border:1px solid var(--border);
   font-size:0.9rem;color:#fff;cursor:pointer;
-  flex:1 1 120px;max-width:160px;
+  flex:1 1 100px;max-width:140px;
   transition:opacity .25s,transform .25s;
 }
 #checkBtn{background:var(--btn-check);}
 #nextBtn{background:var(--btn-next);}
 .btn:hover{opacity:0.85;}
-
-/* 🔹 発光アニメーション */
-@keyframes flashBlue {
-  0%{box-shadow:0 0 0 rgba(0,123,255,0);}
-  50%{box-shadow:0 0 12px rgba(0,123,255,0.8);}
-  100%{box-shadow:0 0 0 rgba(0,123,255,0);}
-}
-@keyframes flashRed {
-  0%{box-shadow:0 0 0 rgba(255,51,51,0);}
-  50%{box-shadow:0 0 12px rgba(255,51,51,0.8);}
-  100%{box-shadow:0 0 0 rgba(255,51,51,0);}
-}
-@keyframes flashGreen {
-  0%{box-shadow:0 0 0 rgba(40,167,69,0);}
-  50%{box-shadow:0 0 12px rgba(40,167,69,0.8);}
-  100%{box-shadow:0 0 0 rgba(40,167,69,0);}
-}
+@keyframes flashBlue {0%,100%{box-shadow:0 0 0 rgba(0,123,255,0);}50%{box-shadow:0 0 12px rgba(0,123,255,0.8);}}
+@keyframes flashRed {0%,100%{box-shadow:0 0 0 rgba(255,51,51,0);}50%{box-shadow:0 0 12px rgba(255,51,51,0.8);}}
+@keyframes flashGreen {0%,100%{box-shadow:0 0 0 rgba(40,167,69,0);}50%{box-shadow:0 0 12px rgba(40,167,69,0.8);}}
 .flash-blue{animation:flashBlue 0.8s ease;}
 .flash-red{animation:flashRed 0.8s ease;}
 .flash-green{animation:flashGreen 0.8s ease;}
@@ -95,16 +73,19 @@ footer{position:sticky;bottom:0;background:var(--bg);
 <script>
 let trueR=0,points=[],totalCorrect=0,wrongCount=0,answered=false,level=1;
 const maxMistakes=3;
+
 function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
 function to2(v){return Number(Number(v).toFixed(2));}
 function getStdDevByLevel(lv){return lv===1?0.6:lv===2?0.8:lv===3?1.5:2.0;}
 function getColorByLevel(lv){return lv===1?"steelblue":lv===2?"orange":lv===3?"green":"crimson";}
+
 function generateData(r,n=100,lv=1){
   const d=[],sd=getStdDevByLevel(lv),safeR=clamp(r,-0.9999,0.9999);
   for(let i=0;i<n;i++){const x=randn()*sd, y=safeR*x+Math.sqrt(1-safeR*safeR)*randn()*sd;d.push([x,y]);}
   return d;
 }
+
 function drawScatter(data){
   const c=document.getElementById('scatter'),ctx=c.getContext('2d');
   const cssSize=Math.min(window.innerWidth*0.8,300);
@@ -118,6 +99,7 @@ function drawScatter(data){
     ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();
   });
 }
+
 function createChoicesStrict(trueR){
   const minDiff=0.15;
   const group=(cnt,min,max,avoid=[])=>{
@@ -140,14 +122,17 @@ function createChoicesStrict(trueR){
   }
   return [...neg,...pos].sort((a,b)=>a-b);
 }
+
 function updateScore(){
   document.getElementById('score').textContent=`レベル: ${level}　合計正解: ${totalCorrect}`;
   const hearts='💖'.repeat(maxMistakes-wrongCount)+'💔'.repeat(wrongCount);
   document.getElementById('hearts').textContent=hearts;
 }
+
 function disableChoices(dis){
   document.querySelectorAll('input[name="rchoice"]').forEach(i=>i.disabled=dis);
 }
+
 function newQuestion(){
   answered=false;
   const res=document.getElementById('result');
@@ -165,6 +150,7 @@ function newQuestion(){
   });
   disableChoices(false); updateScore();
 }
+
 function checkAnswer(){
   if(answered)return;
   const sel=document.querySelector('input[name="rchoice"]:checked');
@@ -174,18 +160,24 @@ function checkAnswer(){
   const btn=document.getElementById('checkBtn');
   btn.classList.remove('flash-blue','flash-red');
   void btn.offsetWidth;
+
   if(Math.abs(v-trueR)<0.001){
-    totalCorrect++; res.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
+    totalCorrect++;
+    res.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
     res.style.color='var(--ok)'; btn.classList.add('flash-blue');
   }else{
-    wrongCount++; res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
+    wrongCount++;
+    res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
     res.style.color='var(--ng)'; btn.classList.add('flash-red');
     if(wrongCount>=maxMistakes){
-      res.innerHTML=`💀 ゲームオーバー!<br>最終スコア: ${totalCorrect}`;
+      res.innerHTML=`💀 ゲームオーバー!<br>
+        正解は <strong>${trueR.toFixed(2)}</strong><br>
+        <span style="font-size:1.4rem;color:red;">最終スコア: ${totalCorrect}</span>`;
     }
   }
   disableChoices(true); updateScore();
 }
+
 function nextQuestion(){
   const btn=document.getElementById('nextBtn');
   btn.classList.remove('flash-green');
@@ -194,6 +186,7 @@ function nextQuestion(){
   if(wrongCount>=maxMistakes){totalCorrect=0;wrongCount=0;}
   newQuestion();
 }
+
 document.getElementById('checkBtn').onclick=checkAnswer;
 document.getElementById('nextBtn').onclick=nextQuestion;
 window.onresize=()=>drawScatter(points);
