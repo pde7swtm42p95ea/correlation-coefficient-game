@@ -10,66 +10,74 @@
   --ok:#007bff; --ng:#ff3333;
   --btn-check:#007bff; --btn-next:#28a745;
 }
-html,body{height:100%; margin:0; background:var(--bg); font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;}
-.container{max-width:860px; margin:0 auto; padding:12px; text-align:center;}
-h2{margin:8px 0; font-size:clamp(1.1rem,2.2vw,1.6rem);}
-p{margin:6px 0;}
-#score{margin:6px 0; font-size:0.98rem;}
-.canvas-wrap{display:flex; justify-content:center; margin:8px 0;}
-canvas{width:92vw; max-width:420px; aspect-ratio:1/1; background:#fff; border:1px solid var(--border); border-radius:10px;}
-.choice-container{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:10px 0;}
-.choice-container label{display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:#fff; border:1px solid #e6e6e6; cursor:pointer;}
-input[type="radio"]{transform:scale(1.15);}
-#result{font-weight:700; margin-top:10px; min-height:2.4em; transition:color .25s;}
-#hearts{font-size:22px; margin-top:6px;}
+html,body{margin:0;background:var(--bg);font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;}
+.container{max-width:480px;margin:0 auto;padding:4px;text-align:center;}
+h2{margin:4px 0;font-size:clamp(1rem,2.5vw,1.3rem);}
+p{margin:4px 0;font-size:0.9rem;}
+#score{margin:4px 0;font-size:0.9rem;}
+#hearts{font-size:18px;margin:4px 0;}
 
-/* ボタンデザイン */
-.btn-row{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
+/* 🔹 散布図を小型化 */
+.canvas-wrap{display:flex;justify-content:center;margin:4px 0;}
+canvas{width:80vw;max-width:300px;aspect-ratio:1/1;background:#fff;
+  border:1px solid var(--border);border-radius:8px;}
+
+/* 🔹 選択肢 */
+.choice-container{
+  display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0;
+}
+.choice-container label{
+  display:flex;align-items:center;gap:4px;padding:4px 6px;
+  border-radius:6px;background:#fff;border:1px solid #ddd;
+  cursor:pointer;font-size:14px;
+}
+input[type="radio"]{transform:scale(1.1);}
+
+/* 🔹 結果表示 */
+#result{font-weight:700;margin-top:6px;min-height:2.2em;transition:color .25s;font-size:0.95rem;}
+
+/* 🔹 ボタン */
+footer{position:sticky;bottom:0;background:var(--bg);
+  padding:6px 0;border-top:1px solid var(--border);display:flex;justify-content:center;}
+.btn-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:100%;max-width:420px;}
 .btn{
-  padding:10px 14px; border-radius:8px; border:1px solid var(--border);
-  font-size:1rem; color:#fff; cursor:pointer;
-  flex:1 1 140px; max-width:200px;
-  transition:transform .25s,opacity .25s;
+  padding:8px 10px;border-radius:6px;border:1px solid var(--border);
+  font-size:0.9rem;color:#fff;cursor:pointer;
+  flex:1 1 120px;max-width:160px;
+  transition:opacity .25s,transform .25s;
 }
 #checkBtn{background:var(--btn-check);}
 #nextBtn{background:var(--btn-next);}
 .btn:hover{opacity:0.85;}
-@media(max-width:480px){
-  .btn-row{flex-direction:column; gap:8px;}
-  #result{margin-bottom:60px;}
-}
 
-/* フッター */
-footer{
-  position:sticky; bottom:0; background:var(--bg);
-  padding:10px 0; border-top:1px solid var(--border);
-  display:flex; justify-content:center;
-}
-footer .btn-row{width:100%; max-width:420px;}
-
-/* ✨光るアニメーション */
+/* 🔹 発光アニメーション */
 @keyframes flashBlue {
-  0%{box-shadow:0 0 0px rgba(0,123,255,0);}
-  50%{box-shadow:0 0 20px rgba(0,123,255,0.8);}
-  100%{box-shadow:0 0 0px rgba(0,123,255,0);}
+  0%{box-shadow:0 0 0 rgba(0,123,255,0);}
+  50%{box-shadow:0 0 12px rgba(0,123,255,0.8);}
+  100%{box-shadow:0 0 0 rgba(0,123,255,0);}
 }
 @keyframes flashRed {
-  0%{box-shadow:0 0 0px rgba(255,51,51,0);}
-  50%{box-shadow:0 0 20px rgba(255,51,51,0.8);}
-  100%{box-shadow:0 0 0px rgba(255,51,51,0);}
+  0%{box-shadow:0 0 0 rgba(255,51,51,0);}
+  50%{box-shadow:0 0 12px rgba(255,51,51,0.8);}
+  100%{box-shadow:0 0 0 rgba(255,51,51,0);}
+}
+@keyframes flashGreen {
+  0%{box-shadow:0 0 0 rgba(40,167,69,0);}
+  50%{box-shadow:0 0 12px rgba(40,167,69,0.8);}
+  100%{box-shadow:0 0 0 rgba(40,167,69,0);}
 }
 .flash-blue{animation:flashBlue 0.8s ease;}
 .flash-red{animation:flashRed 0.8s ease;}
+.flash-green{animation:flashGreen 0.8s ease;}
 </style>
 </head>
 <body>
 <div class="container">
   <h2>📊 相関係数 当てゲーム</h2>
-  <p>散布図を見て、6つから相関係数を当てよう！</p>
   <div id="score">レベル: 1　合計正解: 0</div>
   <div id="hearts">💖💖💖</div>
 
-  <div class="canvas-wrap"><canvas id="scatter" width="360" height="360"></canvas></div>
+  <div class="canvas-wrap"><canvas id="scatter" width="300" height="300"></canvas></div>
   <div class="choice-container" id="choices"></div>
   <p id="result"></p>
 </div>
@@ -96,15 +104,15 @@ function generateData(r,n=100,lv=1){
 }
 function drawScatter(data){
   const c=document.getElementById('scatter'),ctx=c.getContext('2d');
-  const dpr=window.devicePixelRatio||1,cssSize=Math.min(window.innerWidth*0.92,420);
+  const cssSize=Math.min(window.innerWidth*0.8,300);
   c.style.width=cssSize+'px';c.style.height=cssSize+'px';
-  c.width=Math.round(cssSize*dpr);c.height=Math.round(cssSize*dpr);
-  ctx.scale(dpr,dpr);ctx.clearRect(0,0,cssSize,cssSize);
+  c.width=cssSize;c.height=cssSize;
+  ctx.clearRect(0,0,cssSize,cssSize);
   ctx.fillStyle=getColorByLevel(level);
   const center=cssSize/2,scale=cssSize/5;
   data.forEach(([x,y])=>{
     const px=center+x*scale,py=center-y*scale;
-    ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();
   });
 }
 function createChoicesStrict(trueR){
@@ -161,16 +169,14 @@ function checkAnswer(){
   answered=true;
   const v=parseFloat(sel.value),res=document.getElementById('result');
   const btn=document.getElementById('checkBtn');
-  btn.classList.remove('flash-blue','flash-red'); // reset animation
-  void btn.offsetWidth; // reflow to restart animation
+  btn.classList.remove('flash-blue','flash-red');
+  void btn.offsetWidth;
   if(Math.abs(v-trueR)<0.001){
     totalCorrect++; res.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
-    res.style.color='var(--ok)';
-    btn.classList.add('flash-blue');
+    res.style.color='var(--ok)'; btn.classList.add('flash-blue');
   }else{
     wrongCount++; res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
-    res.style.color='var(--ng)';
-    btn.classList.add('flash-red');
+    res.style.color='var(--ng)'; btn.classList.add('flash-red');
     if(wrongCount>=maxMistakes){
       res.innerHTML=`💀 ゲームオーバー!<br>最終スコア: ${totalCorrect}`;
     }
@@ -178,6 +184,10 @@ function checkAnswer(){
   disableChoices(true); updateScore();
 }
 function nextQuestion(){
+  const btn=document.getElementById('nextBtn');
+  btn.classList.remove('flash-green');
+  void btn.offsetWidth;
+  btn.classList.add('flash-green');
   if(wrongCount>=maxMistakes){totalCorrect=0;wrongCount=0;}
   newQuestion();
 }
