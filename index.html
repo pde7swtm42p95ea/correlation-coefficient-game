@@ -182,6 +182,8 @@ label.innerHTML=`<input type="radio" name="rchoice" value="${v}"> ${v.toFixed(2)
 c.appendChild(label);
 });
 disableChoices(false); updateScore();
+document.getElementById('checkBtn').disabled=false;
+document.getElementById('nextBtn').disabled=true;
 }
 
 function endGame(reason){
@@ -215,11 +217,14 @@ res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
 res.style.color='var(--ng)'; btn.classList.add('flash-red');
 }
 disableChoices(true); updateScore();
+document.getElementById('checkBtn').disabled=true;
 
 if(wrongCount>=maxMistakes){
 endGame('gameover');
 }else if(questionNum>=TOTAL_QUESTIONS){
 endGame('cleared');
+}else{
+document.getElementById('nextBtn').disabled=false;
 }
 }
 
