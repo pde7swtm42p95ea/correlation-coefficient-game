@@ -6,9 +6,9 @@
 <title>📊 相関係数 当てゲーム</title>
 <style>
 :root {
-  --bg:#fafafa; --border:#ccc;
-  --ok:#007bff; --ng:#ff3333;
-  --btn-check:#007bff; --btn-next:#28a745;
+--bg:#fafafa; --border:#ccc;
+--ok:#007bff; --ng:#ff3333;
+--btn-check:#007bff; --btn-next:#28a745;
 }
 html,body{margin:0;background:var(--bg);font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;}
 .container{max-width:480px;margin:0 auto;padding:4px;text-align:center;}
@@ -16,34 +16,40 @@ h2{margin:4px 0;font-size:clamp(1rem,2.5vw,1.3rem);}
 p{margin:4px 0;font-size:0.9rem;}
 #score{margin:4px 0;font-size:0.9rem;}
 #hearts{font-size:18px;margin:4px 0;}
+
 .canvas-wrap{display:flex;justify-content:center;margin:4px 0;}
 canvas{width:80vw;max-width:300px;aspect-ratio:1/1;background:#fff;
-  border:1px solid var(--border);border-radius:8px;}
+border:1px solid var(--border);border-radius:8px;}
+
 .choice-container{
-  display:flex;flex-wrap:wrap;justify-content:center;
-  margin:6px auto;max-width:320px;
+display:flex;flex-wrap:wrap;justify-content:center;
+margin:6px auto;max-width:320px;
 }
 .choice-container label{
-  display:flex;align-items:center;justify-content:center;
-  gap:4px;padding:6px;border-radius:6px;background:#fff;border:1px solid #ddd;
-  cursor:pointer;font-size:14px;width:31%;margin:2px;
-  box-sizing:border-box;
+display:flex;align-items:center;justify-content:center;
+gap:4px;padding:6px;border-radius:6px;background:#fff;border:1px solid #ddd;
+cursor:pointer;font-size:14px;width:31%;margin:2px;
+box-sizing:border-box;
 }
 .choice-container label:hover{background:#f5f5f5;}
 input[type="radio"]{transform:scale(1.1);}
+
 #result{font-weight:700;margin-top:6px;min-height:2.2em;transition:color .25s;font-size:0.95rem;}
+
 footer{position:sticky;bottom:0;background:var(--bg);
-  padding:6px 0;border-top:1px solid var(--border);display:flex;justify-content:center;}
+padding:6px 0;border-top:1px solid var(--border);display:flex;justify-content:center;}
 .btn-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;width:100%;max-width:420px;}
 .btn{
-  padding:8px 10px;border-radius:6px;border:1px solid var(--border);
-  font-size:0.9rem;color:#fff;cursor:pointer;
-  flex:1 1 100px;max-width:140px;
-  transition:opacity .25s,transform .25s;
+padding:8px 10px;border-radius:6px;border:1px solid var(--border);
+font-size:0.9rem;color:#fff;cursor:pointer;
+flex:1 1 120px;max-width:160px;
+transition:opacity .25s,transform .25s;
 }
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
 #checkBtn{background:var(--btn-check);}
 #nextBtn{background:var(--btn-next);}
-.btn:hover{opacity:0.85;}
+.btn:hover:not(:disabled){opacity:0.85;}
+
 @keyframes flashBlue {0%,100%{box-shadow:0 0 0 rgba(0,123,255,0);}50%{box-shadow:0 0 12px rgba(0,123,255,0.8);}}
 @keyframes flashRed {0%,100%{box-shadow:0 0 0 rgba(255,51,51,0);}50%{box-shadow:0 0 12px rgba(255,51,51,0.8);}}
 @keyframes flashGreen {0%,100%{box-shadow:0 0 0 rgba(40,167,69,0);}50%{box-shadow:0 0 12px rgba(40,167,69,0.8);}}
@@ -54,25 +60,28 @@ footer{position:sticky;bottom:0;background:var(--bg);
 </head>
 <body>
 <div class="container">
-  <h2>📊 相関係数 当てゲーム</h2>
-  <div id="score">レベル: 1　合計正解: 0</div>
-  <div id="hearts">💖💖💖</div>
+<h2>📊 相関係数 当てゲーム</h2>
+<div id="score">問題: 1 / 30　レベル: 1　合計正解: 0</div>
+<div id="hearts">💖💖💖</div>
 
-  <div class="canvas-wrap"><canvas id="scatter" width="300" height="300"></canvas></div>
-  <div class="choice-container" id="choices"></div>
-  <p id="result"></p>
+<div class="canvas-wrap"><canvas id="scatter" width="300" height="300"></canvas></div>
+<div class="choice-container" id="choices"></div>
+<p id="result"></p>
 </div>
 
 <footer>
-  <div class="btn-row">
-    <button class="btn" id="checkBtn">答え合わせ</button>
-    <button class="btn" id="nextBtn">次の問題へ</button>
-  </div>
+<div class="btn-row">
+<button class="btn" id="checkBtn">答え合わせ</button>
+<button class="btn" id="nextBtn">次の問題へ</button>
+</div>
 </footer>
 
 <script>
-let trueR=0,points=[],totalCorrect=0,wrongCount=0,answered=false,level=1;
-const maxMistakes=3;
+const TOTAL_QUESTIONS = 30;
+const maxMistakes = 3;
+
+let trueR=0, points=[], totalCorrect=0, wrongCount=0, answered=false, level=1;
+let questionNum=0, gameEnded=false;
 
 function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 function clamp(v,min,max){return Math.min(Math.max(v,min),max);}
@@ -81,110 +90,146 @@ function getStdDevByLevel(lv){return lv===1?0.6:lv===2?0.8:lv===3?1.5:2.0;}
 function getColorByLevel(lv){return lv===1?"steelblue":lv===2?"orange":lv===3?"green":"crimson";}
 
 function generateData(r,n=100,lv=1){
-  const d=[],sd=getStdDevByLevel(lv),safeR=clamp(r,-0.9999,0.9999);
-  for(let i=0;i<n;i++){const x=randn()*sd, y=safeR*x+Math.sqrt(1-safeR*safeR)*randn()*sd;d.push([x,y]);}
-  return d;
+const d=[],sd=getStdDevByLevel(lv),safeR=clamp(r,-0.9999,0.9999);
+for(let i=0;i<n;i++){const x=randn()*sd, y=safeR*x+Math.sqrt(1-safeR*safeR)*randn()*sd;d.push([x,y]);}
+return d;
+}
+
+// 実際に生成された点から標本相関係数を計算(表示上の「正解」はこちらを使う)
+function pearson(data){
+const n=data.length;
+const mx=data.reduce((s,[x])=>s+x,0)/n;
+const my=data.reduce((s,[,y])=>s+y,0)/n;
+let num=0, dx2=0, dy2=0;
+data.forEach(([x,y])=>{
+const dx=x-mx, dy=y-my;
+num+=dx*dy; dx2+=dx*dx; dy2+=dy*dy;
+});
+return num/Math.sqrt(dx2*dy2);
 }
 
 function drawScatter(data){
-  const c=document.getElementById('scatter'),ctx=c.getContext('2d');
-  const cssSize=Math.min(window.innerWidth*0.8,300);
-  c.style.width=cssSize+'px';c.style.height=cssSize+'px';
-  c.width=cssSize;c.height=cssSize;
-  ctx.clearRect(0,0,cssSize,cssSize);
-  ctx.fillStyle=getColorByLevel(level);
-  const center=cssSize/2,scale=cssSize/5;
-  data.forEach(([x,y])=>{
-    const px=center+x*scale,py=center-y*scale;
-    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();
-  });
+const c=document.getElementById('scatter'),ctx=c.getContext('2d');
+const cssSize=Math.min(window.innerWidth*0.8,300);
+c.style.width=cssSize+'px';c.style.height=cssSize+'px';
+c.width=cssSize;c.height=cssSize;
+ctx.clearRect(0,0,cssSize,cssSize);
+ctx.fillStyle=getColorByLevel(level);
+const center=cssSize/2,scale=cssSize/5;
+data.forEach(([x,y])=>{
+const px=center+x*scale,py=center-y*scale;
+ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();
+});
 }
 
-function createChoicesStrict(trueR){
-  const minDiff=0.15;
-  const group=(cnt,min,max,avoid=[])=>{
-    const arr=[];let tries=0;
-    while(arr.length<cnt && tries<500){
-      const v=to2(min+Math.random()*(max-min));
-      if([...arr,...avoid].every(a=>Math.abs(a-v)>=minDiff))arr.push(v);
-      tries++;
-    }return arr;
-  };
-  let pos,neg;
-  if(trueR>=0){
-    pos=group(3,0.15,1,[trueR]);
-    pos[Math.floor(Math.random()*3)]=trueR;
-    neg=group(3,-1,-0.15,pos);
-  }else{
-    neg=group(3,-1,-0.15,[trueR]);
-    neg[Math.floor(Math.random()*3)]=trueR;
-    pos=group(3,0.15,1,neg);
-  }
-  return [...neg,...pos].sort((a,b)=>a-b);
+function createChoicesStrict(trueRVal){
+const minDiff=0.15;
+const group=(cnt,min,max,avoid=[])=>{
+const arr=[];let tries=0;
+while(arr.length<cnt && tries<500){
+const v=to2(min+Math.random()*(max-min));
+if([...arr,...avoid].every(a=>Math.abs(a-v)>=minDiff))arr.push(v);
+tries++;
+}
+while(arr.length<cnt){ // フォールバック(まれに範囲内で見つからない場合)
+arr.push(to2(min+Math.random()*(max-min)));
+}
+return arr;
+};
+let pos,neg;
+if(trueRVal>=0){
+pos=group(3,0.15,1,[trueRVal]);
+pos[Math.floor(Math.random()*3)]=trueRVal;
+neg=group(3,-1,-0.15,pos);
+}else{
+neg=group(3,-1,-0.15,[trueRVal]);
+neg[Math.floor(Math.random()*3)]=trueRVal;
+pos=group(3,0.15,1,neg);
+}
+return [...neg,...pos].sort((a,b)=>a-b);
 }
 
 function updateScore(){
-  document.getElementById('score').textContent=`レベル: ${level}　合計正解: ${totalCorrect}`;
-  const hearts='💖'.repeat(maxMistakes-wrongCount)+'💔'.repeat(wrongCount);
-  document.getElementById('hearts').textContent=hearts;
+document.getElementById('score').textContent=
+`問題: ${Math.min(questionNum,TOTAL_QUESTIONS)} / ${TOTAL_QUESTIONS}　レベル: ${level}　合計正解: ${totalCorrect}`;
+const brokenHearts=Math.min(wrongCount,maxMistakes);
+const hearts='💖'.repeat(Math.max(0,maxMistakes-brokenHearts))+'💔'.repeat(brokenHearts);
+document.getElementById('hearts').textContent=hearts;
 }
 
 function disableChoices(dis){
-  document.querySelectorAll('input[name="rchoice"]').forEach(i=>i.disabled=dis);
+document.querySelectorAll('input[name="rchoice"]').forEach(i=>i.disabled=dis);
 }
 
 function newQuestion(){
-  answered=false;
-  const res=document.getElementById('result');
-  res.textContent='';res.style.color='#000';
-  level=Math.floor(totalCorrect/5)+1;
-  trueR=to2(Math.random()*2-1);
-  points=generateData(trueR,100,level);
-  drawScatter(points);
-  const ch=createChoicesStrict(trueR),c=document.getElementById('choices');
-  c.innerHTML='';
-  ch.forEach(v=>{
-    const label=document.createElement('label');
-    label.innerHTML=`<input type="radio" name="rchoice" value="${v}"> ${v.toFixed(2)}`;
-    c.appendChild(label);
-  });
-  disableChoices(false); updateScore();
+if(gameEnded) return;
+questionNum++;
+answered=false;
+const res=document.getElementById('result');
+res.textContent='';res.style.color='#000';
+level=Math.floor(totalCorrect/5)+1;
+
+const targetR=to2(Math.random()*2-1);
+points=generateData(targetR,100,level);
+trueR=to2(pearson(points)); // 実測の相関係数を正解とする
+
+drawScatter(points);
+const ch=createChoicesStrict(trueR),c=document.getElementById('choices');
+c.innerHTML='';
+ch.forEach(v=>{
+const label=document.createElement('label');
+label.innerHTML=`<input type="radio" name="rchoice" value="${v}"> ${v.toFixed(2)}`;
+c.appendChild(label);
+});
+disableChoices(false); updateScore();
+}
+
+function endGame(reason){
+gameEnded=true;
+disableChoices(true);
+document.getElementById('checkBtn').disabled=true;
+document.getElementById('nextBtn').disabled=true;
+const res=document.getElementById('result');
+const label = reason==='cleared' ? '🏁 全30問終了!' : '💀 ゲームオーバー!';
+res.innerHTML=`${label}<br><span style="font-size:1.4rem;color:red;">最終正解数: ${totalCorrect} / ${TOTAL_QUESTIONS}</span>`;
+updateScore();
 }
 
 function checkAnswer(){
-  if(answered)return;
-  const sel=document.querySelector('input[name="rchoice"]:checked');
-  if(!sel){alert('選択肢を選んでください！');return;}
-  answered=true;
-  const v=parseFloat(sel.value),res=document.getElementById('result');
-  const btn=document.getElementById('checkBtn');
-  btn.classList.remove('flash-blue','flash-red');
-  void btn.offsetWidth;
+if(answered||gameEnded)return;
+const sel=document.querySelector('input[name="rchoice"]:checked');
+if(!sel){alert('選択肢を選んでください！');return;}
+answered=true;
+const v=parseFloat(sel.value),res=document.getElementById('result');
+const btn=document.getElementById('checkBtn');
+btn.classList.remove('flash-blue','flash-red');
+void btn.offsetWidth;
 
-  if(Math.abs(v-trueR)<0.001){
-    totalCorrect++;
-    res.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
-    res.style.color='var(--ok)'; btn.classList.add('flash-blue');
-  }else{
-    wrongCount++;
-    res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
-    res.style.color='var(--ng)'; btn.classList.add('flash-red');
-    if(wrongCount>=maxMistakes){
-      res.innerHTML=`💀 ゲームオーバー!<br>
-        正解は <strong>${trueR.toFixed(2)}</strong><br>
-        <span style="font-size:1.4rem;color:red;">最終スコア: ${totalCorrect}</span>`;
-    }
-  }
-  disableChoices(true); updateScore();
+if(Math.abs(v-trueR)<0.001){
+totalCorrect++;
+res.textContent=`🎯 正解！ 実際の相関係数は ${trueR.toFixed(2)}`;
+res.style.color='var(--ok)'; btn.classList.add('flash-blue');
+}else{
+wrongCount++;
+res.textContent=`❌ 残念！ 正解は ${trueR.toFixed(2)} でした。`;
+res.style.color='var(--ng)'; btn.classList.add('flash-red');
+}
+disableChoices(true); updateScore();
+
+if(wrongCount>=maxMistakes){
+endGame('gameover');
+}else if(questionNum>=TOTAL_QUESTIONS){
+endGame('cleared');
+}
 }
 
 function nextQuestion(){
-  const btn=document.getElementById('nextBtn');
-  btn.classList.remove('flash-green');
-  void btn.offsetWidth;
-  btn.classList.add('flash-green');
-  if(wrongCount>=maxMistakes){totalCorrect=0;wrongCount=0;}
-  newQuestion();
+if(gameEnded)return;
+const btn=document.getElementById('nextBtn');
+btn.classList.remove('flash-green');
+void btn.offsetWidth;
+btn.classList.add('flash-green');
+newQuestion();
 }
 
 document.getElementById('checkBtn').onclick=checkAnswer;
