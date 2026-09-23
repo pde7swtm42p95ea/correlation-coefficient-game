@@ -73,6 +73,7 @@ transition:opacity .25s,transform .25s;
 <div class="btn-row">
 <button class="btn" id="checkBtn">答え合わせ</button>
 <button class="btn" id="nextBtn">次の問題へ</button>
+<button class="btn" id="restartBtn" style="background:#6c757d;display:none;">もう一度挑戦する</button>
 </div>
 </footer>
 
@@ -189,12 +190,21 @@ document.getElementById('nextBtn').disabled=true;
 function endGame(reason){
 gameEnded=true;
 disableChoices(true);
-document.getElementById('checkBtn').disabled=true;
-document.getElementById('nextBtn').disabled=true;
+document.getElementById('checkBtn').style.display='none';
+document.getElementById('nextBtn').style.display='none';
+document.getElementById('restartBtn').style.display='inline-block';
 const res=document.getElementById('result');
 const label = reason==='cleared' ? '🏁 全30問終了!' : '💀 ゲームオーバー!';
 res.innerHTML=`${label}<br><span style="font-size:1.4rem;color:red;">最終正解数: ${totalCorrect} / ${TOTAL_QUESTIONS}</span>`;
 updateScore();
+}
+
+function restartGame(){
+totalCorrect=0; wrongCount=0; questionNum=0; level=1; gameEnded=false;
+document.getElementById('checkBtn').style.display='inline-block';
+document.getElementById('nextBtn').style.display='inline-block';
+document.getElementById('restartBtn').style.display='none';
+newQuestion();
 }
 
 function checkAnswer(){
@@ -239,6 +249,7 @@ newQuestion();
 
 document.getElementById('checkBtn').onclick=checkAnswer;
 document.getElementById('nextBtn').onclick=nextQuestion;
+document.getElementById('restartBtn').onclick=restartGame;
 window.onresize=()=>drawScatter(points);
 newQuestion();
 </script>
