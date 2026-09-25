@@ -56,9 +56,44 @@ transition:opacity .25s,transform .25s;
 .flash-blue{animation:flashBlue 0.8s ease;}
 .flash-red{animation:flashRed 0.8s ease;}
 .flash-green{animation:flashGreen 0.8s ease;}
+
+/* 🔹 スタート画面 */
+#startScreen{
+max-width:420px;margin:0 auto;padding:20px 16px;text-align:left;
+}
+#startScreen h1{font-size:1.3rem;text-align:center;margin:8px 0 16px;}
+#startScreen .rules{
+background:#fff;border:1px solid var(--border);border-radius:8px;
+padding:12px 16px;margin-bottom:16px;font-size:0.9rem;line-height:1.7;
+}
+#startScreen .rules li{margin-bottom:6px;}
+#startBtn{
+display:block;margin:0 auto;background:var(--btn-check);color:#fff;
+border:none;border-radius:8px;padding:12px 32px;font-size:1.05rem;
+cursor:pointer;
+}
+#startBtn:hover{opacity:0.85;}
+#gameScreen{display:none;}
 </style>
 </head>
 <body>
+<div id="startScreen">
+<h1>📊 相関係数 当てゲーム</h1>
+<div class="rules">
+<strong>ルール</strong>
+<ul>
+<li>表示された散布図を見て、その相関係数に最も近い数値を6つの選択肢から選びます。</li>
+<li>「答え合わせ」を押すと正誤と実際の相関係数が表示されます。</li>
+<li>全部で<strong>30問</strong>出題されます。最後まで解くと最終正解数が表示されます。</li>
+<li>3回間違えると、その時点でゲームオーバーになります。</li>
+<li>5問正解するごとにレベルが上がり、散布図のばらつき方が変化します。</li>
+<li>ゲームオーバー・終了後は「もう一度挑戦する」でリスタートできます。</li>
+</ul>
+</div>
+<button id="startBtn">ゲームスタート</button>
+</div>
+
+<div id="gameScreen">
 <div class="container">
 <h2>📊 相関係数 当てゲーム</h2>
 <div id="score">問題: 1 / 30　レベル: 1　合計正解: 0</div>
@@ -76,6 +111,7 @@ transition:opacity .25s,transform .25s;
 <button class="btn" id="restartBtn" style="background:#6c757d;display:none;">もう一度挑戦する</button>
 </div>
 </footer>
+</div>
 
 <script>
 const TOTAL_QUESTIONS = 30;
@@ -250,8 +286,13 @@ newQuestion();
 document.getElementById('checkBtn').onclick=checkAnswer;
 document.getElementById('nextBtn').onclick=nextQuestion;
 document.getElementById('restartBtn').onclick=restartGame;
-window.onresize=()=>drawScatter(points);
+window.onresize=()=>{ if(points.length) drawScatter(points); };
+
+document.getElementById('startBtn').onclick=()=>{
+document.getElementById('startScreen').style.display='none';
+document.getElementById('gameScreen').style.display='block';
 newQuestion();
+};
 </script>
 </body>
 </html>
