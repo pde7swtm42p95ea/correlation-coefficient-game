@@ -231,7 +231,7 @@ document.getElementById('nextBtn').style.display='none';
 document.getElementById('restartBtn').style.display='inline-block';
 const res=document.getElementById('result');
 const label = reason==='cleared' ? '🏁 全30問終了!' : '💀 ゲームオーバー!';
-res.innerHTML=`${label}<br>直前の正解: ${trueR.toFixed(2)}<br><span style="font-size:1.4rem;color:red;">最終正解数: ${totalCorrect} / ${TOTAL_QUESTIONS}</span>`;
+res.innerHTML=`${label}<br>正解は ${trueR.toFixed(2)} でした。<br><span style="font-size:1.4rem;color:red;">最終正解数: ${totalCorrect} / ${TOTAL_QUESTIONS}</span>`;
 updateScore();
 }
 
